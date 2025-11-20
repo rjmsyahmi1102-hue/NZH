@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Happy Birthday Naziha</title>
+<style>
+  :root{--accent:#ff6b81;--soft:#ffd9e2}
+  html,body{height:100%;margin:0;background:#0b1420;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  /* Use generated image as background */
+  body{
+    background-image: url('/mnt/data/A_2D_digital_illustration_depicts_a_nighttime_birt.png');
+    background-size: cover;
+    background-position: center;
+    color:#fff;
+    overflow:hidden;
+  }
+
+  .stage{
+    position:relative;
+    width:100%;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+
+  .table-area{
+    position:relative;
+    width:420px;
+    max-width:80%;
+    transform:translateY(20px);
+  }
+
+  /* Cake (we reuse the background; but show an overlay "cake" button) */
+  .cake-btn{
+    display:block;
+    margin:0 auto;
+    width:310px;
+    height:190px;
+    border-radius:18px;
+    background:linear-gradient(180deg,#2a1b2f 0%, rgba(0,0,0,0.25) 100%);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 -6px 18px rgba(255,255,255,0.02);
+    cursor:pointer;
+    position:relative;
+    border: 3px solid rgba(255,255,255,0.04);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .candle{
+    position:absolute;
+    top:28px;
+    width:36px;height:70px;border-radius:10px;
+    background:linear-gradient(#ffd8b0,#ff9d6e);
+    display:flex;align-items:flex-start;justify-content:center;
+  }
+  .flame{
+    width:18px;height:22px;border-radius:50% 50% 50% 50%;
+    background: radial-gradient(circle at 40% 30%, #fff7c8 0%, #ffd24a 30%, #ff7b1a 70%);
+    margin-top:-8px;
+    filter: drop-shadow(0 6px 8px rgba(255,120,50,0.35));
+    transition: transform .15s linear, opacity .15s linear;
+  }
+
+  .blow-text{
+    position:absolute;
+    bottom:14px;
+    left:50%;
+    transform:translateX(-50%);
+    background:linear-gradient(90deg,var(--accent),#ff9ec2);
+    padding:12px 22px;border-radius:30px;font-weight:700;
+    box-shadow:0 8px 20px rgba(0,0,0,0.4);
+    user-select:none;
+  }
+
+  /* heart + greeting */
+  .greeting{
+    position: absolute;
+    top:12%;
+    left:50%;
+    transform:translateX(-50%) scale(0.8);
+    text-align:center;
+    pointer-events:none;
+    opacity:0;
+  }
+  .greeting.show{ animation: greetingIn .9s cubic-bezier(.22,.9,.24,1) forwards; }
+  @keyframes greetingIn{
+    from{ opacity:0; transform:translateX(-50%) scale(.6); }
+    to{ opacity:1; transform:translateX(-50%) scale(1); }
+  }
+  .greeting h1{
+    margin:0;font-size:38px;letter-spacing:1px;text-shadow:0 6px 20px rgba(0,0,0,0.6);
+    color:var(--soft);
+  }
+
+  /* icons */
+  .icons{
+    position:absolute;
+    bottom:8%;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:28px;
+    opacity:0;
+  }
+  .icons.show{ animation: iconsIn .6s ease forwards; }
+  @keyframes iconsIn{ from{opacity:0; transform:translate(-50%,20px)} to{opacity:1; transform:translate(-50%,0)} }
+  .icon-btn{
+    width:92px;height:92px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.5);
+    border:2px solid rgba(255,255,255,0.03);
+  }
+  .icon-btn svg{ width:56px;height:56px; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); }
+
+  /* popup style */
+  .popup{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:88%;max-width:640px;background:rgba(2,6,12,0.92);border-radius:12px;padding:18px;color:#fff;display:none;z-index:50;
+    box-shadow:0 20px 70px rgba(0,0,0,0.6);
+  }
+  .popup.show{ display:block; animation: popupIn .25s ease; }
+  @keyframes popupIn{ from{opacity:0; transform:translate(-50%,-52%)} to{opacity:1; transform:translate(-50%,-50%)} }
+  .popup h2{margin:6px 0 12px;font-size:20px}
+  .close{ margin-top:12px;padding:8px 12px;border-radius:8px;background:var(--accent);border:none;color:#fff;cursor:pointer }
+
+  /* canvas overlay for fireworks */
+  #fwCanvas{ position:fixed; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:30; }
+
+  /* small responsive */
+  @media (max-width:520px){
+    .greeting h1{ font-size:26px }
+    .cake-btn{ width:86%; height:160px }
+    .icon-btn{ width:74px;height:74px }
+  }
+</style>
+</head>
+<body>
+  <canvas id="fwCanvas"></canvas>
+
+  <div class="stage">
+    <div class="table-area">
+      <div id="cakeArea" class="cake-btn" title="Blow the candle (click)">
+        <!-- show a decorative candle element -->
+        <div class="candle" id="candleEl" style="left:calc(50% - 18px);">
+          <div class="flame" id="flameEl"></div>
+        </div>
+        <div class="blow-text" id="blowBtn">BLOW THE CANDLE</div>
+      </div>
+
+      <!-- greeting (heart + text) -->
+      <div class="greeting" id="greeting">
+        <!-- heart svg -->
+        <svg width="140" height="80" viewBox="0 0 24 24" fill="none" style="display:block;margin:0 auto 8px">
+          <path d="M12 21s-7.5-4.9-9.2-8.1C-0.1 8.8 4.2 4 7.7 6.2 9 7.2 10 8.1 12 9.7c2-1.6 3-2.5 4.3-3.5 3.5-2.2 7.8 2.6 4.9 6.7C19.5 16.1 12 21 12 21z"
+                fill="url(#g1)"></path>
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1">
+              <stop offset="0" stop-color="#ff9ec2"/>
+              <stop offset="1" stop-color="#ff6b81"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <h1 id="greetingText">Happy Birthday Naziha</h1>
+      </div>
+
+      <!-- icons area (hidden until after fireworks) -->
+      <div class="icons" id="icons">
+        <div class="icon-btn" id="iconLetter" title="Open love letter">
+          <!-- envelope svg -->
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="4" width="20" height="14" rx="2" fill="#ffccd6"/>
+            <path d="M3 6l8.5 6L21 6" stroke="#ff6b81" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="11" r="1.6" fill="#ff6b81"/>
+          </svg>
+        </div>
+
+        <div class="icon-btn" id="iconGift" title="Open gift">
+          <!-- gift svg -->
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="7" width="18" height="12" rx="2" fill="#ffd59e"/>
+            <path d="M12 7v12" stroke="#ff8b5a" stroke-width="1.2"/>
+            <path d="M7.5 7c.9-2 3-3 4.5-3s3.6 1 4.5 3" stroke="#ff9e6b" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="icon-btn" id="iconMusic" title="Play music">
+          <!-- music + flower -->
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 9v7a3 3 0 1 0 2 2.83V10l8-2v7" stroke="#ffd9f0" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="6" cy="6" r="1.8" fill="#ff9ec2"/>
+            <circle cx="18" cy="6" r="1.2" fill="#ffccd6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popups -->
+  <div id="letterPopup" class="popup">
+    <h2>Love Letter</h2>
+    <div id="letterContent" style="min-height:120px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:12px;border-radius:8px;color:#fff">
+      <!-- Replace this content with your message -->
+      <p style="line-height:1.6;">Dear Naziha,<br><br>Paste your romantic message here — change this text in the HTML.</p>
+    </div>
+    <button class="close" onclick="closePopup('letterPopup')">Close</button>
+  </div>
+
+  <div id="giftPopup" class="popup">
+    <h2>Your Gift</h2>
+    <video id="giftVideo" controls style="width:100%;border-radius:8px;background:#000">
+      <!-- Replace source with your video file path -->
+      <source src="assets/birthday_message.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    <button class="close" onclick="closePopup('giftPopup')">Close</button>
+  </div>
+
+  <div id="musicPopup" class="popup">
+    <h2>Music for You</h2>
+    <audio id="musicPlayer" controls style="width:100%;">
+      <!-- Replace source with your audio path -->
+      <source src="assets/your_song.mp3" type="audio/mp3">
+      Your browser does not support audio.
+    </audio>
+    <button class="close" onclick="closePopup('musicPopup')">Close</button>
+  </div>
+
+<script>
+/* ---------- Basic interactivity ---------- */
+const cakeArea = document.getElementById('cakeArea');
+const flameEl = document.getElementById('flameEl');
+const greeting = document.getElementById('greeting');
+const icons = document.getElementById('icons');
+const fwCanvas = document.getElementById('fwCanvas');
+const blowBtn = document.getElementById('blowBtn');
+
+let blown = false;
+
+cakeArea.addEventListener('click', async () => {
+  if (blown) return;
+  blown = true;
+
+  // flame "blow" effect
+  flameEl.style.transform = 'scaleY(.2) translateY(-6px)';
+  flameEl.style.opacity = '0';
+  blowBtn.textContent = '...';
+
+  // tiny delay then start fireworks
+  setTimeout(() => {
+    // hide cake area elegantly
+    cakeArea.style.transform = 'scale(.92)';
+    cakeArea.style.opacity = '0';
+    // play fireworks sound (use your own assets path if needed)
+    playSound('/mnt/data/fireworks_sound.mp3');
+    // start fireworks animation
+    startFireworks();
+    // show greeting/heart
+    setTimeout(()=> greeting.classList.add('show'), 600);
+    // show icons after 3 seconds from fireworks start
+    setTimeout(()=> icons.classList.add('show'), 3000);
+  }, 350);
+});
+
+/* ---------- Sound helper ---------- */
+function playSound(path){
+  try{
+    const a = new Audio(path);
+    a.volume = 0.9; a.play().catch(()=>{/* autoplay block may prevent play until user interacts (we already did) */});
+  }catch(e){ console.warn('Sound failed', e); }
+}
+
+/* ---------- Popup handlers ---------- */
+function closePopup(id){ document.getElementById(id).classList.remove('show'); }
+document.getElementById('iconLetter').addEventListener('click', ()=> document.getElementById('letterPopup').classList.add('show'));
+document.getElementById('iconGift').addEventListener('click', ()=> document.getElementById('giftPopup').classList.add('show'));
+document.getElementById('iconMusic').addEventListener('click', ()=> {
+  document.getElementById('musicPopup').classList.add('show');
+  const mp = document.getElementById('musicPlayer');
+  mp.currentTime = 0; mp.play().catch(()=>{});
+});
+
+/* ---------- Fireworks particle system (simple) ---------- */
+const ctx = fwCanvas.getContext && fwCanvas.getContext('2d');
+let W = fwCanvas.width = innerWidth;
+let H = fwCanvas.height = innerHeight;
+window.addEventListener('resize', ()=>{ W = fwCanvas.width = innerWidth; H = fwCanvas.height = innerHeight; });
+
+let particles = [];
+
+function rand(min,max){ return Math.random()*(max-min)+min; }
+
+function spawnExplosion(x,y,colorCount=5){
+  const count = 60;
+  const colors = ['#ff6b81','#ffd166','#ff9ec2','#ffd9e2','#ff7b7b'];
+  for(let i=0;i<count;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = rand(1.8,5.2);
+    particles.push({
+      x,y,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed,
+      life: rand(60,110),
+      age:0,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      size: rand(1.8,3.8)
+    });
+  }
+}
+
+/* spawn a heart-shaped bloom: approximate heart with parametric curve */
+function spawnHeart(centerX, centerY, scale=10, petals=80){
+  for(let t=0;t<Math.PI*2;t += (Math.PI*2)/petals){
+    // heart parametric (x = 16 sin^3 t, y = 13 cos t - 5 cos 2t -2 cos 3t - cos 4t)
+    const s = Math.sin(t), c = Math.cos(t);
+    const hx = 16 * Math.pow(s,3);
+    const hy = 13*c - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
+    // normalize and spawn a soft particle outward from curve point
+    const px = centerX + hx * scale;
+    const py = centerY - hy * scale;
+    // small local burst from each point
+    spawnExplosion(px,py);
+  }
+}
+
+let animFrame;
+function startFireworks(){
+  // play a few staggered explosions to mimic fireworks forming a heart
+  const cx = W/2, cy = H/3;
+  // sequence: outer bursts then heart fill then final big pop
+  setTimeout(()=> spawnExplosion(cx, cy-60), 100);
+  setTimeout(()=> spawnExplosion(cx-120, cy+10), 300);
+  setTimeout(()=> spawnExplosion(cx+120, cy+10), 450);
+  setTimeout(()=> spawnHeart(cx, cy, 6, 40), 650);
+  setTimeout(()=> spawnExplosion(cx, cy-20), 1100);
+  setTimeout(()=> spawnExplosion(cx, cy+40), 1250);
+
+  // show the greeting text (already triggered)
+  // animate particles continuously
+  if(!animFrame) animate();
+}
+
+/* animate */
+function animate(){
+  animFrame = requestAnimationFrame(animate);
+  ctx.clearRect(0,0,W,H);
+
+  // update particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.age++;
+    p.vy += 0.03; // gravity
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vx *= 0.995;
+    p.vy *= 0.995;
+    const alpha = 1 - (p.age / p.life);
+    if(alpha <= 0){ particles.splice(i,1); continue; }
+    ctx.globalAlpha = Math.max(0,alpha);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y, p.size, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // small floating sparkles near greeting (optional)
+  // if no particles, we can stop anim loop after a while to save CPU
+  // but keep it running for visual effect
+}
+
+/* ---------- Initialization: ensure canvas sized ---------- */
+(function init(){
+  // If user wants to preview locally without sound file exist, ignore errors
+  // Preload fireworks sound path provided earlier (if exists)
+  // Nothing else to init
+})();
+
+</script>
+</body>
+</html>
